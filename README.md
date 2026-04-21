@@ -180,6 +180,6 @@ streamlit run main.py
 
 ## Author
 
-**Developed by Vinodhini**
+**Developed by Nithyanantham G**
 
 GitHub Portfolio Project — Python + SQL + Streamlit
