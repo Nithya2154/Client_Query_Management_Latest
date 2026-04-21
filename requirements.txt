@@ -4,154 +4,108 @@
 # ==============================================================================
 #
 #  Project   : Client Query Management System
-#  Domain    : SQL / Data Engineering / Python
-#  Python    : >= 3.10  (developed & tested on Python 3.12.3)
-#  Database  : SQLite (default, zero-config) OR MySQL 8.x
+#  Domain    : Python / Streamlit / PostgreSQL
+#  Python    : >= 3.10
+#  Database  : PostgreSQL
 #
-#  Install all dependencies:
+#  Install:
 #      pip install -r requirements.txt
 #
 # ==============================================================================
 
 
 # ------------------------------------------------------------------------------
-# 1. STREAMLIT  —  Web UI framework
+# 1. STREAMLIT — Web Application Framework
 # ------------------------------------------------------------------------------
-#  Used in   : app.py, pages/1_Client_Portal.py,
-#              pages/2_Support_Dashboard.py, pages/3_Analytics.py
-#  Purpose   : Multi-page web application, forms, widgets, session state,
-#              metric cards, dataframe display, download buttons, charts
-#  Key APIs  : st.form(), st.text_input(), st.selectbox(), st.text_area(),
-#              st.metric(), st.dataframe(), st.tabs(), st.expander(),
-#              st.session_state, st.download_button(), st.rerun()
+# Used in   : main.py, client.py, support.py
+# Purpose   : UI forms, dashboard pages, session handling,
+#             metrics, tables, buttons, login pages
 # ------------------------------------------------------------------------------
 streamlit>=1.32.0
 
 
 # ------------------------------------------------------------------------------
-# 2. PANDAS  —  Primary data layer (all DB reads routed through pandas)
+# 2. PANDAS — Data Processing Layer
 # ------------------------------------------------------------------------------
-#  Used in   : db/connection.py, utils/auth.py, utils/query_ops.py,
-#              scripts/import_csv.py, pages/1_Client_Portal.py,
-#              pages/2_Support_Dashboard.py, pages/3_Analytics.py
-#  Purpose   : pd.read_sql() for all SELECT queries (returns DataFrame),
-#              DataFrame.to_sql() for bulk CSV → DB inserts,
-#              groupby, boolean masking, datetime arithmetic,
-#              itertuples() for rendering, to_csv() for export,
-#              value_counts(), describe(), str.contains()
-#  Key APIs  : pd.read_sql(), pd.read_csv(), pd.to_datetime(),
-#              DataFrame.to_sql(), DataFrame.groupby(), DataFrame.to_csv(),
-#              Series.value_counts(), Series.describe()
+# Used in   : db_code.py, support.py, client.py
+# Purpose   : SQL result reading, DataFrame operations,
+#             filtering, metrics, query reports
 # ------------------------------------------------------------------------------
 pandas>=2.0.0
 
 
 # ------------------------------------------------------------------------------
-# 3. PLOTLY  —  Interactive analytics charts
+# 3. MATPLOTLIB — Dashboard Analytics Charts
 # ------------------------------------------------------------------------------
-#  Used in   : pages/3_Analytics.py
-#  Purpose   : Line chart (daily trend), donut pie (status split),
-#              horizontal bar chart (query categories),
-#              histogram (resolution time distribution),
-#              grouped bar chart (open vs closed by category)
-#  Key APIs  : plotly.express.line(), plotly.express.bar(),
-#              plotly.express.histogram(), plotly.graph_objects.Pie(),
-#              fig.add_vline(), fig.update_layout(), fig.update_traces()
+# Used in   : support.py
+# Purpose   : Pie chart and bar chart visualization
 # ------------------------------------------------------------------------------
-plotly>=5.18.0
-
-
-# ------------------------------------------------------------------------------
-# 4. MYSQL-CONNECTOR-PYTHON  —  MySQL database driver (optional)
-# ------------------------------------------------------------------------------
-#  Used in   : db/connection.py  (only when USE_MYSQL = True)
-#  Purpose   : DB-API 2.0 connection to MySQL 8.x, used by pandas.read_sql()
-#              and execute_write() for INSERT/UPDATE/DELETE statements
-#  Key APIs  : mysql.connector.connect(**config), cursor.execute(),
-#              cursor.executemany(), connection.commit(), connection.rollback()
-#  Note      : NOT required when using SQLite (USE_MYSQL = False).
-#              SQLite is bundled with Python — zero install needed.
-# ------------------------------------------------------------------------------
-mysql-connector-python>=8.3.0
-
-
-# ------------------------------------------------------------------------------
-# 5. PYTHON-DOTENV  —  Secure environment variable loading
-# ------------------------------------------------------------------------------
-#  Used in   : db/connection.py  (os.getenv() for DB credentials)
-#  Purpose   : Loads DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
-#              from a .env file so credentials stay out of source code
-#  Key APIs  : dotenv.load_dotenv(), os.getenv("DB_HOST", "localhost")
-#  Setup     : cp .env.example .env  → fill in your MySQL credentials
-# ------------------------------------------------------------------------------
-python-dotenv>=1.0.0
 matplotlib>=3.8.0
-psycopg2
+
+
+# ------------------------------------------------------------------------------
+# 4. PSYCOPG2 — PostgreSQL Database Driver
+# ------------------------------------------------------------------------------
+# Used in   : db_code.py
+# Purpose   : PostgreSQL connection and SQL execution
+# ------------------------------------------------------------------------------
+psycopg2-binary>=2.9.9
+
+
+# ------------------------------------------------------------------------------
+# 5. BCRYPT — Password Hashing Security
+# ------------------------------------------------------------------------------
+# Used in   : db_code.py
+# Purpose   : Secure password hashing and verification
+# ------------------------------------------------------------------------------
+bcrypt>=4.1.2
+
+
+# ------------------------------------------------------------------------------
+# 6. WARNINGS — Standard Library (No install needed)
+# ------------------------------------------------------------------------------
+# Used in   : db_code.py
+# Purpose   : Suppress warning messages
+# ------------------------------------------------------------------------------
+# Built-in Python module
+
+
+# ------------------------------------------------------------------------------
+# 7. TIME — Standard Library (No install needed)
+# ------------------------------------------------------------------------------
+# Used in   : support.py
+# Purpose   : Delay and refresh operations
+# ------------------------------------------------------------------------------
+# Built-in Python module
+
+
 # ==============================================================================
-#  STANDARD LIBRARY MODULES  (no install needed — built into Python)
+# VERSION COMPATIBILITY
 # ==============================================================================
 #
-#  sqlite3   — Default zero-config database engine (file: data/cqms.db)
-#              db/connection.py: sqlite3.connect(SQLITE_PATH)
-#
-#  hashlib   — SHA-256 password hashing (never stores plaintext)
-#              utils/auth.py: hashlib.sha256(password.encode()).hexdigest()
-#
-#  uuid      — Short unique query ID generation
-#              utils/query_ops.py: str(uuid.uuid4())[:8].upper()
-#
-#  datetime  — Auto-timestamping query creation and closure events
-#              utils/query_ops.py: datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-#
-#  os        — File path resolution, reading environment variables
-#              db/connection.py, scripts/import_csv.py
-#
-#  sys       — sys.path manipulation so pages/ can import from root modules
-#              All pages/ and scripts/ files
+# Python        : 3.10 / 3.11 / 3.12
+# Streamlit     : 1.32+
+# Pandas        : 2.0+
+# Matplotlib    : 3.8+
+# PostgreSQL    : 14+
 #
 # ==============================================================================
 
 
 # ==============================================================================
-#  VERSION COMPATIBILITY MATRIX
+# QUICK SETUP
 # ==============================================================================
 #
-#  Runtime            Version                Status
-#  -----------------  ---------------------  --------
-#  Python             3.10 / 3.11 / 3.12     Tested on 3.12.3
-#  streamlit          1.32 – 1.40+           Compatible
-#  pandas             2.0 – 2.2+             Uses .map() not deprecated .applymap()
-#  plotly             5.18 – 5.24+           Compatible
-#  mysql-connector    8.3 – 9.x              Compatible
-#  python-dotenv      1.0 – 1.1+             Compatible
-#  SQLite             3.x (stdlib)           Default DB — zero config
-#  MySQL              8.0 / 8.4              Optional — configure via .env
+# Create virtual environment:
+#     python -m venv venv
 #
-# ==============================================================================
-
-
-# ==============================================================================
-#  QUICK SETUP
-# ==============================================================================
+# Activate:
+#     venv\Scripts\activate
 #
-#  Step 1 — Create virtual environment
-#      python -m venv venv
-#      source venv/bin/activate        # Mac / Linux
-#      venv\Scripts\activate           # Windows
+# Install packages:
+#     pip install -r requirements.txt
 #
-#  Step 2 — Install all packages
-#      pip install -r requirements.txt
-#
-#  Step 3 — (MySQL only) Configure credentials
-#      cp .env.example .env
-#      # Edit .env with your MySQL host, user, password, database name
-#      # Set USE_MYSQL = True in db/connection.py
-#
-#  Step 4 — Launch app (DB + CSV auto-initialize on first run)
-#      streamlit run app.py
-#
-#  Demo login:
-#      Support  →  username: support_team  |  password: support123
-#      Client   →  username: demo_client   |  password: client123
+# Run project:
+#     streamlit run main.py
 #
 # ==============================================================================
