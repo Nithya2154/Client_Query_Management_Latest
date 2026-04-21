@@ -1,0 +1,175 @@
+1. CREATE TABLE login (
+    username VARCHAR(100) PRIMARY KEY,
+    password VARCHAR(100) NOT NULL,
+    role VARCHAR(10) NOT NULL CHECK (role IN ('Client', 'Support')),
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    modified_time TIMESTAMP,
+    modified_by VARCHAR(100)
+);
+
+Login Store Procedure:
+CREATE OR REPLACE FUNCTION check_login(
+    p_username VARCHAR,
+    p_password VARCHAR,
+    p_role VARCHAR
+)
+RETURNS BOOLEAN
+AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1
+        FROM login
+        WHERE username = p_username
+          AND password = p_password
+          AND role = p_role
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
+Update Password Store Procedure:
+CREATE OR REPLACE FUNCTION update_password(
+    p_username VARCHAR,
+    p_new_password VARCHAR
+)
+RETURNS BOOLEAN
+AS $$
+BEGIN
+    UPDATE login
+    SET password = p_new_password,
+        modified_time = CURRENT_TIMESTAMP,
+        modified_by = p_username
+    WHERE username = p_username;
+
+    IF FOUND THEN
+        RETURN TRUE;   -- update success
+    ELSE
+        RETURN FALSE;  -- user not found
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+2. CREATE TABLE query (
+    query_id SERIAL PRIMARY KEY,
+    email VARCHAR(100) NOT NULL,
+    phono VARCHAR(10) NOT NULL,
+    query_cat VARCHAR(50) NOT NULL,
+    query_des VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'Open',
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,	
+    closed_time TIMESTAMP
+);
+
+
+Insert Function:
+CREATE OR REPLACE FUNCTION insert_query(
+    p_email VARCHAR,
+    p_phono VARCHAR,
+    p_query_cat VARCHAR,
+    p_query_des VARCHAR
+)
+RETURNS BOOLEAN
+AS $$
+BEGIN
+    INSERT INTO query (
+        email,
+        phono,
+        query_cat,
+        query_des,
+        status,
+        created_time
+    )
+    VALUES (
+        p_email,
+        p_phono,
+        p_query_cat,
+        p_query_des,
+        'Open',
+        CURRENT_TIMESTAMP
+    );
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+
+View All Query:
+CREATE OR REPLACE FUNCTION get_all_queries()
+RETURNS TABLE (
+    query_id TEXT,
+    email VARCHAR,
+    phono VARCHAR,
+    query_cat VARCHAR,
+    query_des VARCHAR,
+    status VARCHAR,
+    created_time TIMESTAMP,
+    closed_time TIMESTAMP
+)
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        'Q' || LPAD(q.query_id::TEXT, 3, '0') AS query_id,
+        q.email,
+        q.phono,
+        q.query_cat,
+        q.query_des,
+        q.status,
+        q.created_time,
+        q.closed_time
+    FROM query q
+    ORDER BY q.created_time DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+Single:
+CREATE OR REPLACE FUNCTION get_queries_filter(
+    p_phono VARCHAR DEFAULT NULL,
+    p_status VARCHAR DEFAULT NULL
+)
+RETURNS TABLE (
+    query_id INT,
+    email VARCHAR,
+    phono VARCHAR,
+    query_cat VARCHAR,
+    query_des VARCHAR,
+    status VARCHAR,
+    created_time TIMESTAMP,
+    closed_time TIMESTAMP
+)
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM query
+    WHERE 
+        (p_phono IS NULL OR phono = p_phono)
+        AND
+        (p_status IS NULL OR status = p_status)
+    ORDER BY created_time DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+Update Status:
+CREATE OR REPLACE FUNCTION close_query(p_query_id INT)
+RETURNS BOOLEAN
+AS $$
+BEGIN
+    UPDATE query
+    SET status = 'Closed',
+        closed_time = CURRENT_TIMESTAMP
+    WHERE query_id = p_query_id;
+
+    IF FOUND THEN
+        RETURN TRUE;   -- success
+    ELSE
+        RETURN FALSE;  -- query not found
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
